@@ -1,12 +1,10 @@
 package com.bridgelabz.bookstoreorderservice.controller;
 
-import com.bridgelabz.bookstoreorderservice.dto.OrderServiceDTO;
+
 import com.bridgelabz.bookstoreorderservice.model.OrderServiceModel;
 import com.bridgelabz.bookstoreorderservice.service.IOrderService;
 import com.bridgelabz.bookstoreorderservice.util.Response;
-import com.bridgelabz.bookstoreorderservice.util.ResponseClass;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -36,8 +34,8 @@ public class OrderServiceController {
     @PutMapping("/placeOrder/{cartId}")
     public ResponseEntity<Response> placeOrder(@PathVariable Long cartId,
                                                @RequestHeader String token,
-                                               @Valid @RequestBody OrderServiceDTO orderServiceDTO) {
-        Response response = orderService.placeOrder(cartId, token, orderServiceDTO);
+                                               @RequestParam Long addressId) {
+        Response response = orderService.placeOrder(cartId, token, addressId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
@@ -59,12 +57,13 @@ public class OrderServiceController {
      *
      * @author : Aviligonda Sreenivasulu
      * @Param : token
-     * */
+     */
     @GetMapping("/getAllOrdersForUser")
     public ResponseEntity<List<?>> getAllOrdersForUser(@RequestHeader String token) {
         List<OrderServiceModel> response = orderService.getAllOrdersForUser(token);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
+
     /**
      * Purpose :  Get All Orders
      *

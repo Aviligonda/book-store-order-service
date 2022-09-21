@@ -1,6 +1,5 @@
 package com.bridgelabz.bookstoreorderservice.service;
 
-import com.bridgelabz.bookstoreorderservice.dto.OrderServiceDTO;
 import com.bridgelabz.bookstoreorderservice.model.OrderServiceModel;
 import com.bridgelabz.bookstoreorderservice.util.Response;
 
@@ -12,7 +11,7 @@ import java.util.List;
  * @author : Aviligonda Sreenivasulu
  */
 public interface IOrderService {
-    Response placeOrder(Long cartId, String token, OrderServiceDTO orderServiceDTO);
+    Response placeOrder(Long cartId, String token, Long addressId);
 
     Response cancelOrder(Long orderId, String token);
 

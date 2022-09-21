@@ -1,8 +1,9 @@
 package com.bridgelabz.bookstoreorderservice.service;
 
-import com.bridgelabz.bookstoreorderservice.dto.OrderServiceDTO;
 import com.bridgelabz.bookstoreorderservice.exception.UserException;
+import com.bridgelabz.bookstoreorderservice.model.AddressModel;
 import com.bridgelabz.bookstoreorderservice.model.OrderServiceModel;
+import com.bridgelabz.bookstoreorderservice.repository.AddressRepository;
 import com.bridgelabz.bookstoreorderservice.repository.OrderServiceRepository;
 import com.bridgelabz.bookstoreorderservice.util.CartResponse;
 import com.bridgelabz.bookstoreorderservice.util.Response;
@@ -32,6 +33,8 @@ public class OrderService implements IOrderService {
     MailService mailService;
     @Autowired
     RestTemplate restTemplate;
+    @Autowired
+    AddressRepository addressRepository;
 
     /**
      * Purpose : Implement the Logic of Place the order
@@ -40,19 +43,29 @@ public class OrderService implements IOrderService {
      * @Param :  orderServiceDTO,token,cartId
      */
     @Override
-    public Response placeOrder(Long cartId, String token, OrderServiceDTO orderServiceDTO) {
+    public Response placeOrder(Long cartId, String token, Long addressId) {
         UserResponse isUserPresent = restTemplate.getForObject("http://BS-USER-SERVICE:8080/userService/userVerification/" + token, UserResponse.class);
         if (isUserPresent.getStatusCode() == 200) {
             CartResponse isCartPresent = restTemplate.getForObject("http://BS-CART-SERVICE:8082/cartService/verifyCartItem/" + cartId, CartResponse.class);
             if (isUserPresent.getStatusCode() == 200) {
                 if (isUserPresent.getObject().getId() == isCartPresent.getObject().getUserId()) {
-                    OrderServiceModel orderServiceModel = new OrderServiceModel(orderServiceDTO);
+                    OrderServiceModel orderServiceModel = new OrderServiceModel();
                     orderServiceModel.setQuantity(isCartPresent.getObject().getQuantity());
                     orderServiceModel.setPrice(isCartPresent.getObject().getTotalPrice());
                     orderServiceModel.setOrderDate(LocalDateTime.now());
                     orderServiceModel.setBookId(isCartPresent.getObject().getBookId());
                     orderServiceModel.setUserId(isUserPresent.getObject().getId());
                     orderServiceModel.setCancel(false);
+                    Optional<AddressModel> isAddressPresent = addressRepository.findById(addressId);
+                    if (isAddressPresent.isPresent()) {
+                        if (isAddressPresent.get().getUserId() == isUserPresent.getObject().getId()) {
+                            orderServiceModel.setAddress(isAddressPresent.get());
+                        } else {
+                            throw new UserException(400, "Address UserId and UserId Did't match");
+                        }
+                    } else {
+                        throw new UserException(400, "Address Not Found with this Id");
+                    }
                     orderServiceRepository.save(orderServiceModel);
                     return new Response(200, "Success", orderServiceModel);
                 }
@@ -97,17 +110,13 @@ public class OrderService implements IOrderService {
     public List<OrderServiceModel> getAllOrdersForUser(String token) {
         UserResponse isUserPresent = restTemplate.getForObject("http://BS-USER-SERVICE:8080/userService/userVerification/" + token, UserResponse.class);
         if (isUserPresent.getStatusCode() == 200) {
-            Optional<OrderServiceModel> isUserIdPresent = orderServiceRepository.findByUserId(isUserPresent.getObject().getId());
-            if (isUserIdPresent.isPresent()) {
-                List<OrderServiceModel> isOrderPresent = orderServiceRepository.findAll();
-                if (isOrderPresent.size() > 0) {
-                    return isOrderPresent;
-                }
-                throw new UserException(400, "No order Found");
+            List<OrderServiceModel> isOrderPresent = orderServiceRepository.findByUserId(isUserPresent.getObject().getId());
+            if (isOrderPresent.size() > 0) {
+                return isOrderPresent;
             }
-            throw new UserException(400, "No Orders Found with this userId");
+            throw new UserException(400, "No order Found");
         }
-        return null;
+        throw new UserException(400, "No Orders Found with this userId");
     }
 
     /**
@@ -118,7 +127,7 @@ public class OrderService implements IOrderService {
      */
     @Override
     public List<OrderServiceModel> getAllOrders() {
-        List<OrderServiceModel> isOrderPresent = orderServiceRepository.findAll();
+        List<OrderServiceModel> isOrderPresent = orderServiceRepository.findAllByCancel();
         if (isOrderPresent.size() > 0) {
             return isOrderPresent;
         }
