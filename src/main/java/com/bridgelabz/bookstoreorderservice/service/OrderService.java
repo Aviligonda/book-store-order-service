@@ -67,6 +67,9 @@ public class OrderService implements IOrderService {
                         throw new UserException(400, "Address Not Found with this Id");
                     }
                     orderServiceRepository.save(orderServiceModel);
+                    String body = "Your Order Placed with Order id is :" + orderServiceModel.getId();
+                    String subject = "Successfully Placed Order ";
+                    mailService.send(isUserPresent.getObject().getEmailId(), body, subject);
                     return new Response(200, "Success", orderServiceModel);
                 }
                 throw new UserException(400, "No Cart Found with this UserId");
@@ -91,6 +94,9 @@ public class OrderService implements IOrderService {
                 if (isOrderPresent.get().getUserId() == isUserPresent.getObject().getId()) {
                     isOrderPresent.get().setCancel(true);
                     orderServiceRepository.save(isOrderPresent.get());
+                    String body = "Your Order Cancel with Order id is :" + isOrderPresent.get().getId();
+                    String subject = "Successfully Cancel Order ";
+                    mailService.send(isUserPresent.getObject().getEmailId(), body, subject);
                     return new Response(200, "Success", isOrderPresent.get());
                 }
                 throw new UserException(400, "No Order present with this UserId");
