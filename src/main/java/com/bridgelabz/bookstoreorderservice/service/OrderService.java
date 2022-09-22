@@ -67,6 +67,7 @@ public class OrderService implements IOrderService {
                         throw new UserException(400, "Address Not Found with this Id");
                     }
                     orderServiceRepository.save(orderServiceModel);
+                    CartResponse deleteCartItem = restTemplate.getForObject("http://BS-CART-SERVICE:8082/cartService/deleteCartItem/" + cartId, CartResponse.class);
                     String body = "Your Order Placed with Order id is :" + orderServiceModel.getId();
                     String subject = "Successfully Placed Order ";
                     mailService.send(isUserPresent.getObject().getEmailId(), body, subject);
@@ -94,6 +95,8 @@ public class OrderService implements IOrderService {
                 if (isOrderPresent.get().getUserId() == isUserPresent.getObject().getId()) {
                     isOrderPresent.get().setCancel(true);
                     orderServiceRepository.save(isOrderPresent.get());
+                    Response updateBookQuantity = restTemplate.getForObject("http://BS-BOOK-SERVICE:8081/bookService/changeBookQuantity1/"
+                            + isOrderPresent.get().getQuantity() + "/" + isOrderPresent.get().getBookId(), Response.class);
                     String body = "Your Order Cancel with Order id is :" + isOrderPresent.get().getId();
                     String subject = "Successfully Cancel Order ";
                     mailService.send(isUserPresent.getObject().getEmailId(), body, subject);
