@@ -5,10 +5,7 @@ import com.bridgelabz.bookstoreorderservice.model.AddressModel;
 import com.bridgelabz.bookstoreorderservice.model.OrderServiceModel;
 import com.bridgelabz.bookstoreorderservice.repository.AddressRepository;
 import com.bridgelabz.bookstoreorderservice.repository.OrderServiceRepository;
-import com.bridgelabz.bookstoreorderservice.util.CartResponse;
-import com.bridgelabz.bookstoreorderservice.util.Response;
-import com.bridgelabz.bookstoreorderservice.util.TokenUtil;
-import com.bridgelabz.bookstoreorderservice.util.UserResponse;
+import com.bridgelabz.bookstoreorderservice.util.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -67,7 +64,8 @@ public class OrderService implements IOrderService {
                         throw new UserException(400, "Address Not Found with this Id");
                     }
                     orderServiceRepository.save(orderServiceModel);
-                    CartResponse deleteCartItem = restTemplate.getForObject("http://BS-CART-SERVICE:8082/cartService/deleteCartItem/" + cartId, CartResponse.class);
+                    Response updateBookQuantity = restTemplate.getForObject("http://BS-BOOK-SERVICE:8081/bookService/changeBookQuantity/"
+                            + orderServiceModel.getQuantity() + "/" + orderServiceModel.getBookId(), Response.class);
                     String body = "Your Order Placed with Order id is :" + orderServiceModel.getId();
                     String subject = "Successfully Placed Order ";
                     mailService.send(isUserPresent.getObject().getEmailId(), body, subject);
